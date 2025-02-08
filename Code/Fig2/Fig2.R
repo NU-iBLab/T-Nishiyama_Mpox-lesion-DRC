@@ -16,6 +16,7 @@ setwd(CURRENT_WORKING_DIR)
   library(ggsignif)
   library(ggpmisc)
   library(ggbeeswarm)
+  library(pROC)
 }
 ###################################################
 ## Graph option
@@ -39,7 +40,7 @@ setwd(CURRENT_WORKING_DIR)
 ###################################################
 
 ### Fig2B ###
-df <- read.csv("../../Data/virus_indpar.csv")[,1:4] %>% 
+df <- read.csv("../../Data/VL_profile.csv")[,1:4] %>% 
   mutate(cluster=ifelse(cluster==0,0,1))
 
 Tmin <- 0.0
@@ -89,7 +90,7 @@ pall <- ggplot(alldf, aes(x = time, y = aV, group = id, color = factor(class))) 
   scale_y_continuous(breaks = seq(-2, 8, by = 2),
                      labels = expression(10^(-2), 10^0, 10^2, 10^4, 10^6, 10^8),
                      limits = c(-0.5, 8.5)) +
-  scale_color_manual(values = c("0" = "#00CC00", "1" = "#FF0000")) +
+  scale_color_manual(values = c("0" = "#0000FF", "1" = "#FF0000")) +
   labs(x="Time after lesion onset (Days)",y="Viral load (genomes/mL)")+
   pltsetb
 ggsave("output/Fig2B.png",pall,dpi=300,height = 4,width = 6)
@@ -110,7 +111,7 @@ pval <- data.frame(pname=c("AB"),
 plt1 <- ggplot(df,aes(x=cluster,y=onset.VL,fill=cluster))+
   geom_boxplot()+
   labs(y="Viral load at lesion onset\n(log10 genomes/mL)",x="")+
-  scale_fill_manual(values = c("G1"="#00CC00",
+  scale_fill_manual(values = c("G1"="#0000FF",
                                "G2"="#FF0000"))+
   scale_y_continuous(limits = c(3,6.5),breaks = seq(3,6,1))+
   geom_signif(comparisons = list(c("G1","G2")),
@@ -130,14 +131,14 @@ pval <- data.frame(pname=c("AB"),
 plt2 <- ggplot(df,aes(x=cluster,y=delta,fill=cluster))+
   geom_boxplot()+
   labs(y="Clearance rate (/day)",x="")+
-  scale_fill_manual(values = c("G1"="#00CC00",
+  scale_fill_manual(values = c("G1"="#0000FF",
                                "G2"="#FF0000"))+
-  scale_y_continuous(limits = c(0.146,0.157),breaks = seq(0.146,0.156,0.002))+
+  #scale_y_continuous(limits = c(0.146,0.157),breaks = seq(0.146,0.156,0.002))+
   geom_signif(comparisons = list(c("G1","G2")),
               step_increase = 0.1,annotations = pval$pmark,
               size = .5,textsize = pt,color="black")+
   pltsetb
-
+plt2
 # VL AUC
 t.res <- wilcox.test(df$AUC~df$cluster,paired=F,p.adjust.method="bonferroni")
 pval <- data.frame(pname=c("AB"),
@@ -148,15 +149,15 @@ pval <- data.frame(pname=c("AB"),
                                     ifelse(p.value>0.0001,"***","****")))))
 plt3 <- ggplot(df,aes(y=AUC,x=cluster,fill=cluster))+
   geom_boxplot()+
-  labs(y="Total viral load\n(log10 genomes/mL)",x="")+
-  scale_fill_manual(values = c("G1"="#00CC00",
+  labs(y="AUC of virus dynamics",x="")+
+  scale_fill_manual(values = c("G1"="#0000FF",
                                "G2"="#FF0000"))+
-  scale_y_continuous(limits = c(30,320),breaks = seq(0,300,100))+
+  #scale_y_continuous(limits = c(30,320),breaks = seq(0,300,100))+
   geom_signif(comparisons = list(c("G1","G2")),
               step_increase = 0.1,annotations = pval$pmark,
               size = .5,textsize = pt,color="black")+
   pltsetb
-
+plt3
 # VL at disappear lesion
 t.res <- wilcox.test(df$lesion.disapper.VL~df$cluster,paired=F,p.adjust.method="bonferroni")
 pval <- data.frame(pname=c("AB"),
@@ -168,14 +169,14 @@ pval <- data.frame(pname=c("AB"),
 plt4 <- ggplot(df,aes(x=cluster,y=lesion.disapper.VL,fill=cluster))+
   geom_boxplot()+
   labs(y="Viral load at lesion diappearance\n(log10 genomes/mL)",x="")+
-  scale_fill_manual(values = c("G1"="#00CC00",
+  scale_fill_manual(values = c("G1"="#0000FF",
                                "G2"="#FF0000"))+
   scale_y_continuous(limits = c(0,5),breaks = seq(0,4,1))+
   geom_signif(comparisons = list(c("G1","G2")),
               step_increase = 0.1,annotations = pval$pmark,
               size = .5,textsize = pt,color="black")+
   pltsetb
-
+plt4
 all <- plt1+plt2+plt3+plt4+plot_layout(ncol = 2)
 ggsave("output/Fig2C.png",all,width=8,height=8)
 
@@ -192,9 +193,9 @@ plt1 <- ggplot(df,aes(y=lesion.duration,x=lesion.disapper.VL))+
   stat_correlation(use_label(c("R","P")), method="pearson",size=t.size)+
   labs(y="Lesion duration (Days)",x="Viral load at lesion disappearance\n(log10 genomes/mL)")+
   scale_y_continuous(limits = c(16,70),breaks = seq(20,60,20))+
-  scale_x_continuous(limits = c(0.5,4.05),breaks = seq(-1,4,1))+
+  scale_x_continuous(limits = c(0,4.2),breaks = seq(0,4,1))+
   pltsetb
-
+plt1
 plt2 <- ggplot(df,aes(x=onset.VL,y=lesion.duration))+
   geom_point(size=size_n,alpha=alpha_n) +
   geom_smooth(method = "lm",formula = y~x,lwd=2,color="black",fill="gray")+
@@ -203,22 +204,22 @@ plt2 <- ggplot(df,aes(x=onset.VL,y=lesion.duration))+
   scale_x_continuous(limits = c(3.5,6.5))+
   scale_y_continuous(limits = c(16,70),breaks = seq(20,60,20))+
   pltsetb
-
+plt2
 plt3 <- ggplot(df,aes(x=onset.VL,y=total.lesion))+
   geom_point(size=size_n,alpha=alpha_n) +
   geom_smooth(method = "lm",formula = y~x,lwd=2,color="black",fill="gray")+
   stat_correlation(use_label(c("R","P")), method="pearson",size=t.size)+
-  labs(x="Viral load at lesion onset\n(log10 genomes/mL)",y="Total lesion count\n(log10 lesion count)")+
+  labs(x="Viral load at lesion onset\n(log10 genomes/mL)",y="Log10 Total AUC of lesion dynamics\n for each stage")+
   scale_x_continuous(limits = c(3.5,6.5))+
   scale_y_continuous(limits = c(2.2,5))+
   pltsetb
-
+plt3
 all <- plt1+plt2+plt3+plot_layout(nrow=1)
 ggsave("output/Fig2D.png",all,width = 12,height = 4.5)
 
 ### Fig2F ###
 df <- read.csv("../../Data/enginnering_parameter.csv") %>% 
-  mutate(V_class=ifelse(onset.VL>4.56, "High", "Low"))
+  mutate(V_class=ifelse(onset.VL>4.61, "High", "Low"))
 
 pltz <- ggplot(df,aes(x=factor(V_class,levels = c("High","Low")),y=lesion.duration,fill=V_class))+
   geom_boxplot()+
@@ -226,25 +227,14 @@ pltz <- ggplot(df,aes(x=factor(V_class,levels = c("High","Low")),y=lesion.durati
               map_signif_level = T,step_increase = 0.3,test = "wilcox.test",
               annotations = "****",size = .5,textsize = 5,color="black")+
   scale_fill_manual(values = c("Low"="deeppink3","High"="#6600FF"))+
-  labs(x="",y="Lesion duration (Days)")+
-  coord_flip()+
+  labs(x="Group of viral load at lesion onset",y="Lesion duration (Days)")+
   pltsetb
-ggsave("output/Fig2F.png",pltz,width = 5,height = 2)
+ggsave("output/Fig2F.png",pltz,width = 5,height = 5)
 
-### Fig2F ###
-df <- read.csv("../../Data/g1_feature_count_repeated_rf.csv") %>% 
-  mutate(freq=count/50,
-         feature_name=substr(feature_name, 3, nchar(feature_name))) %>% 
-  filter(freq>=0.5)
+mean(df[df$V_class=="High","lesion.duration"])
+mean(df[df$V_class=="Low","lesion.duration"])
 
-plt <- ggplot(df, aes(y=reorder(feature_name,count),x=freq))+
-  geom_bar(stat = "identity",fill="#009966")+
-  labs(x="Frequency",y="")+
-  coord_flip()+
-  pltsetb+
-  theme( axis.text = element_text(colour = "black", size = 12))
 
-ggsave("output/Fig2H.png",plt,width = 5,height = 2)
 
 
 

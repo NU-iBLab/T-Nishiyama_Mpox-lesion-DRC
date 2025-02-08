@@ -25,17 +25,6 @@ setwd(CURRENT_WORKING_DIR)
 ## Graph option
 ###################################################
 {
-  caka <- "#CC3366"; cakao <- "#CC336650";
-  cao <- "#3366CC"; caoo <- "#3366CC50";
-  cmidori <- "#009966"; cmidorio <- "#00996650";
-  corange <- "#FF6600"; corangeo <- "#FFCC33";
-  cmurasaki <- "#6600FF"; cmurasakio <- "#CC66FF"
-  cpink <- "deeppink3"; cpinko <- "deeppink1"
-  ccha <- "#BB4513"; cchao <- "#CD661D"
-  paka <- "#ff7f7f"; pakao <- "#ff9e9e"
-  pao <- "#8484ff"; paoo <- "#a3a3ff"
-  pmidori <- "#7fff7f"; pmidorio <- "#9eff9e"
-  
   pltsetb <- theme(legend.position="none") + 
     theme( plot.background = element_blank() ) +
     theme( text=element_text("Helvetica") ) +
@@ -48,7 +37,6 @@ setwd(CURRENT_WORKING_DIR)
     theme( panel.background=element_blank() ) +
     theme( panel.grid.major=element_blank() ) +
     theme( panel.grid.minor=element_blank() )
-  
 }
 
 ###################################################
@@ -61,7 +49,7 @@ df.umap <- read.csv("../../Data/clustering_umap.csv") %>%
 
 plt <- ggplot(df.umap,aes(x=X0,y=X1,color=cluster))+
   geom_point(size=4,alpha=.8)+
-  scale_color_manual(values = c("G1"="#00CC00",
+  scale_color_manual(values = c("G1"="#0000FF",
                                 "G2"="#FF0000"))+
   labs(x="UMAP1",y="UMAP2")+
   pltsetb+
@@ -85,7 +73,7 @@ ColFun2 <- colorRamp2(breaks = c(0,0.5,1),
                       space = "RGB")
 coltrans <- ColFun2(seq(0, 1, length = 7))
 # plot
-lwd <- 2.5
+lwd <- 1.5
 alpha_ribbon <- 0.1
 alpha_line <- 0.75
 clnames <- c("G1","G2")
@@ -131,9 +119,9 @@ plot.df <- df %>%
 #各状態のAUC
 plt <- ggplot(plot.df,aes(x=type,y=log10(val),fill=cluster))+
   geom_boxplot()+
-  scale_fill_manual(values = c("G1"="#00CC00",
+  scale_fill_manual(values = c("G1"="#0000FF",
                                "G2"="#FF0000"))+
-  labs(x="Lesion Stage",y="Log10 Lesion count")+
+  labs(x="Lesion Stage",y="Log10 AUC of lesion dynamics")+
   scale_x_discrete(labels=c("p1auc"="Stage1",
                             "p2auc"="Stage2",
                             "p3auc"="Stage3",
@@ -143,7 +131,7 @@ plt <- ggplot(plot.df,aes(x=type,y=log10(val),fill=cluster))+
 ggsave("output/fig1D.png",width = 6,height = 4)
 
 ###Fig1E###
-df <- read.csv("../../Data/enginnering_parameter.csv")
+df <- read.csv("../../Data/lesion_feature.csv")
 #Total Lesion
 t.res <- wilcox.test(df$total.lesion~df$cluster)
 pval <- data.frame(pname=c("AB"),p.value=t.res$p.value) %>% 
@@ -153,9 +141,9 @@ pval <- data.frame(pname=c("AB"),p.value=t.res$p.value) %>%
                                     ifelse(p.value>0.0001,"***","****")))))
 plt <- ggplot(df,aes(x=cluster,y=total.lesion,fill=cluster))+
   geom_boxplot()+
-  scale_fill_manual(values = c("G1"="#00CC00",
+  scale_fill_manual(values = c("G1"="#0000FF",
                                "G2"="#FF0000"))+
-  labs(x="",y="Log10 Total lesion count")+
+  labs(x="",y="Log10 Total AUC of lesion dynamics\nfor each stage")+
   scale_y_continuous(limits = c(2.3,5.1),breaks = seq(3,5,1))+
   geom_signif(comparisons = list(c("G1","G2")),
               step_increase = 0.1,annotations = pval$pmark,
@@ -173,7 +161,7 @@ pval <- data.frame(pname=c("AB"),p.value=t.res$p.value) %>%
 
 plt <- ggplot(df,aes(x=cluster,y=lesion.duration,fill=cluster))+
   geom_boxplot()+
-  scale_fill_manual(values = c("G1"="#00CC00",
+  scale_fill_manual(values = c("G1"="#0000FF",
                                "G2"="#FF0000"))+
   labs(x="",y="Lesion duration (Days)")+
   scale_y_continuous(limits = c(16,70),breaks = seq(20,60,20),labels = expression(20,40,60))+
@@ -186,7 +174,7 @@ ggsave("output/Fig1E-2.png",plt,width=3,height=4)
 
 ###Fig1F###
 #reconstruct 
-df <- read.csv("../../Data/enginnering_parameter.csv")[,1:2] %>% 
+df <- read.csv("../../Data/lesion_feature.csv")[,1:2] %>% 
   mutate(lesion.surv=lesion.duration,
          event=1) %>% 
   dplyr::select("lesion.surv","event","cluster")
@@ -200,7 +188,7 @@ linelistsurv_fit <- survfit(survobj ~ cluster,data=dz)
 
 pltemp2 <- ggsurvplot(linelistsurv_fit,
                       conf.int = T,
-                      palette=c("#00CC00","#FF0000","black"),
+                      palette=c("#0000FF","#FF0000","black"),
                       risk.table = "abs_pct",
                       surv.scale="percent",
                       legend.labs=c("G1","G2","Total"),
@@ -212,6 +200,32 @@ plt
 ggsave("output/Fig1F.png",plt,width=6,height=4)
 
 #### Fig.G ####
+df <- read.csv("../../Data/adm.csv",sep=",")
+
+t.res <- wilcox.test(df$hosp~df$cluster)
+pval <- data.frame(pname=c("AB"),p.value=t.res$p.value) %>% 
+  mutate(pmark=ifelse(p.value>0.05,"N.S.",
+                      ifelse(p.value>0.01,"*",
+                             ifelse(p.value>0.001,"**",
+                                    ifelse(p.value>0.0001,"***","****")))))
+
+plt <- ggplot(df,aes(x=cluster,y=hosp,fill=cluster))+
+  geom_violin(adjust=2,width=1)+
+  geom_boxplot(width=.1,fill="white",outlier.size =1)+
+  scale_fill_manual(values = c("G1"="#0000FF",
+                               "G2"="#FF0000"))+
+  labs(x="",y="Hospitalization period (Days)")+
+  #scale_y_continuous(limits = c(16,70),breaks = seq(20,60,20),labels = expression(20,40,60))+
+  geom_signif(comparisons = list(c("G1","G2")),
+              step_increase = 0.1,annotations = pval$pmark,
+              size = .5,textsize = 5,color="black")+
+  coord_flip()+
+  pltsetb
+plt
+ggsave("output/Fig1G.png",plt,w=7,h=3.5)
+
+
+#### Fig.H ####
 ####Severity score####
 df <- read.csv("../../Data/Ar_LS_severity.csv",sep=",")
 
@@ -232,7 +246,7 @@ df <- read.csv("../../Data/Ar_LS_severity.csv",sep=",")
   plt <- ggplot(merged_data, aes(x = factor(Var1,levels = c("G2","G1")), y = Var2, fill = value)) +
     geom_tile() +
     geom_text(aes(label = labeling), vjust = 0.5) + 
-    scale_fill_gradient(low = "white", high = cmurasakio) +
+    scale_fill_gradient(low = "white", high = "#CC66FF", limits = c(0,1)) +
     theme_minimal() +
     labs(x = "",
          y = "Lesion Severity Score",
@@ -240,8 +254,9 @@ df <- read.csv("../../Data/Ar_LS_severity.csv",sep=",")
     coord_flip()+
     theme( plot.background = element_blank() ) +
     theme( text=element_text("Helvetica") ) +
-    theme( axis.text = element_text(colour = "black", size = 15)) +
-    theme( axis.title = element_text(colour = "black", size = 15) )
+    theme( axis.text = element_text(colour = "black", size = 12)) +
+    theme( axis.title = element_text(colour = "black", size = 12) ) +
+    theme(legend.position="none")
   plt
   
   ## Age
@@ -260,7 +275,7 @@ df <- read.csv("../../Data/Ar_LS_severity.csv",sep=",")
   plt2 <- ggplot(merged_data, aes(x = factor(Var1,levels = c("G2","G1")), y = Var2, fill = value)) +
     geom_tile() +
     geom_text(aes(label = labeling), vjust = 0.5) +  
-    scale_fill_gradient(low = "white", high = cmurasakio) +
+    scale_fill_gradient(low = "white", high = "#CC66FF", limits = c(0,1)) +
     theme_minimal() +
     labs(x = "",
          y = "Age Category",
@@ -268,10 +283,10 @@ df <- read.csv("../../Data/Ar_LS_severity.csv",sep=",")
     coord_flip()+
     theme( plot.background = element_blank() ) +
     theme( text=element_text("Helvetica") ) +
-    theme( axis.text = element_text(colour = "black", size = 15)) +
-    theme( axis.title = element_text(colour = "black", size = 15) )
+    theme( axis.text = element_text(colour = "black", size = 12)) +
+    theme( axis.title = element_text(colour = "black", size = 12) )
   plt2
 }
-allp <- plt+plt2+plot_layout(ncol = 1)
-ggsave("output/Fig1G.png",allp,width=6,height=6)
+allp <- plt+plt2+plot_layout(ncol = 2)
+ggsave("output/Fig1H.png",allp,width=9,height=4)
 
